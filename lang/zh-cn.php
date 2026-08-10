@@ -1,0 +1,41 @@
+<?php
+
+return [
+    'id_error' => 'ID错误',
+    'param_error' => '参数错误',
+    'success_message' => '请求成功',
+    'fail_message' => '请求失败',
+    'not_logged_in' => '未登录或登录已过期',
+    'create_success' => '创建成功',
+    'create_fail' => '创建失败',
+    'delete_success' => '删除成功',
+    'delete_fail' => '删除失败',
+    'update_success' => '修改成功',
+    'update_fail' => '修改失败',
+    'banner_is_not_exist' => '轮播图不存在',
+    'recommend_is_not_exist' => '推荐产品不存在',
+    'partner_is_not_exist' => '合作伙伴不存在',
+    'title_require' => '标题不能为空',
+    'title_max' => '标题不能超过200个字符',
+    'label_max' => '导航标签不能超过100个字符',
+    'description_max' => '介绍不能超过500个字符',
+    'image_max' => '图片地址不能超过500个字符',
+    'url_max' => '跳转链接不能超过500个字符',
+    'button_text_max' => '按钮文本不能超过100个字符',
+    'product_id_error' => '商品ID错误',
+    'name_require' => '名称不能为空',
+    'name_max' => '名称不能超过200个字符',
+    'tag_max' => '徽章不能超过100个字符',
+    'price_max' => '价格不能超过50个字符',
+    'unit_max' => '价格单位不能超过50个字符',
+    'wall_error' => '滚动行参数错误',
+
+    # 导航
+    'nav_plugin_addon_furll_home' => 'FurLL 官网首页配置',
+
+    'auth_site_management_furll_home' => 'FurLL 官网首页配置',
+    'auth_site_management_furll_home_view' => '查看页面',
+    'auth_site_management_furll_home_banner' => '轮播图管理',
+    'auth_site_management_furll_home_recommend' => '推荐产品管理',
+    'auth_site_management_furll_home_partner' => '合作伙伴管理',
+];

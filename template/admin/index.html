@@ -1,0 +1,220 @@
+<link rel="stylesheet" href="/plugins/addon/furll_home/template/admin/css/new.css" />
+<!-- =======内容区域======= -->
+<div id="content" class="furll-home-config" v-cloak>
+  <com-config>
+    <t-tabs v-model="activeTab" class="furll-tabs">
+      <!-- 轮播图 -->
+      <t-tab-panel value="banner" :label="lang.banner_manage">
+        <t-card class="list-card-container">
+          <div class="common-header flex">
+            <div class="tabs flex">
+              <t-button theme="primary" @click="openBannerDialog()">{{lang.add_banner}}</t-button>
+            </div>
+            <div class="flex">
+              <t-input v-model="bannerParams.keywords" @keypress.enter.native="getBannerList(1)" class="search-input"
+                :placeholder="lang.search_placeholder" clearable @clear="getBannerList(1)">
+              </t-input>
+              <t-button @click="getBannerList(1)">{{lang.query}}</t-button>
+            </div>
+          </div>
+          <t-table hover row-key="id" :loading="bannerLoading" :data="bannerList" :columns="bannerColumns">
+            <template #image="slotProps">
+              <img v-if="slotProps.row.image" :src="slotProps.row.image" class="furll-thumb" />
+              <span v-else>-</span>
+            </template>
+            <template #hidden="slotProps">
+              <t-switch :value="Number(slotProps.row.hidden) === 0" @change="onSwitch('banner', slotProps.row)" />
+            </template>
+            <template #op="slotProps">
+              <t-icon name="edit-1" color="#0052D9" @click="openBannerDialog(slotProps.row)" class="common-look"></t-icon>
+              <t-icon name="delete" color="#0052D9" class="common-look" @click="deleteRow('banner', slotProps.row)"></t-icon>
+            </template>
+          </t-table>
+        </t-card>
+      </t-tab-panel>
+
+      <!-- 推荐产品 -->
+      <t-tab-panel value="recommend" :label="lang.recommend_manage">
+        <t-card class="list-card-container">
+          <div class="recommend-toggle-box">
+            <span class="recommend-toggle-label">{{lang.recommend_enabled}}</span>
+            <t-switch v-model="recommendEnabled" :custom-value="[1,0]" @change="saveConfig" />
+            <span class="recommend-toggle-tip">{{ recommendEnabled === 1 ? lang.recommend_enabled_on : lang.recommend_enabled_off }}</span>
+          </div>
+          <div class="common-header flex">
+            <div class="tabs flex">
+              <t-button theme="primary" @click="openRecommendDialog()">{{lang.add_recommend}}</t-button>
+            </div>
+            <div class="flex">
+              <t-input v-model="recommendParams.keywords" @keypress.enter.native="getRecommendList(1)" class="search-input"
+                :placeholder="lang.search_placeholder" clearable @clear="getRecommendList(1)">
+              </t-input>
+              <t-button @click="getRecommendList(1)">{{lang.query}}</t-button>
+            </div>
+          </div>
+          <t-table hover row-key="id" :loading="recommendLoading" :data="recommendList" :columns="recommendColumns">
+            <template #hidden="slotProps">
+              <t-switch :value="Number(slotProps.row.hidden) === 0" @change="onSwitch('recommend', slotProps.row)" />
+            </template>
+            <template #op="slotProps">
+              <t-icon name="edit-1" color="#0052D9" @click="openRecommendDialog(slotProps.row)" class="common-look"></t-icon>
+              <t-icon name="delete" color="#0052D9" class="common-look" @click="deleteRow('recommend', slotProps.row)"></t-icon>
+            </template>
+          </t-table>
+        </t-card>
+      </t-tab-panel>
+
+      <!-- 合作伙伴 -->
+      <t-tab-panel value="partner" :label="lang.partner_manage">
+        <t-card class="list-card-container">
+          <div class="common-header flex">
+            <div class="tabs flex">
+              <t-button theme="primary" @click="openPartnerDialog()">{{lang.add_partner}}</t-button>
+            </div>
+            <div class="flex">
+              <t-input v-model="partnerParams.keywords" @keypress.enter.native="getPartnerList(1)" class="search-input"
+                :placeholder="lang.search_placeholder" clearable @clear="getPartnerList(1)">
+              </t-input>
+              <t-button @click="getPartnerList(1)">{{lang.query}}</t-button>
+            </div>
+          </div>
+          <t-table hover row-key="id" :loading="partnerLoading" :data="partnerList" :columns="partnerColumns">
+            <template #image="slotProps">
+              <img v-if="slotProps.row.image" :src="slotProps.row.image" class="furll-partner-logo" />
+              <span v-else>-</span>
+            </template>
+            <template #wall="slotProps">
+              {{ slotProps.row.wall == 1 ? lang.wall_1 : lang.wall_2 }}
+            </template>
+            <template #hidden="slotProps">
+              <t-switch :value="Number(slotProps.row.hidden) === 0" @change="onSwitch('partner', slotProps.row)" />
+            </template>
+            <template #op="slotProps">
+              <t-icon name="edit-1" color="#0052D9" @click="openPartnerDialog(slotProps.row)" class="common-look"></t-icon>
+              <t-icon name="delete" color="#0052D9" class="common-look" @click="deleteRow('partner', slotProps.row)"></t-icon>
+            </template>
+          </t-table>
+        </t-card>
+      </t-tab-panel>
+    </t-tabs>
+
+    <!-- 轮播图编辑弹窗 -->
+    <t-dialog :header="bannerForm.id ? lang.edit_banner : lang.add_banner" placement="center" :visible.sync="bannerVisible" :on-close="closeBannerDialog" width="720px" :footer="false">
+      <t-form label-align="right" :data="bannerForm" ref="bannerForm" :rules="bannerRules">
+        <t-form-item :label="lang.banner_title" name="title">
+          <t-input :placeholder="lang.input" v-model="bannerForm.title" />
+        </t-form-item>
+        <t-form-item :label="lang.banner_label" name="label">
+          <t-input :placeholder="lang.input" v-model="bannerForm.label" />
+        </t-form-item>
+        <t-form-item :label="lang.banner_description" name="description">
+          <t-textarea :placeholder="lang.input" v-model="bannerForm.description" :maxlength="500" />
+        </t-form-item>
+        <t-form-item :label="lang.banner_image" name="image">
+          <t-upload theme="custom" v-model="bannerImageFiles" :before-upload="beforeUpload" :action="uploadUrl"
+            :headers="uploadHeaders" :format-response="formatResponse" @success="onBannerUploadSuccess" @fail="handleFail" @remove="onBannerRemove" accept="image/*" :show-upload-progress="true" :drag="false">
+            <t-button theme="default" class="upload">
+              <t-icon name="cloud-upload" /> {{lang.upload_image}}
+            </t-button>
+          </t-upload>
+          <p class="upload-tip">{{lang.upload_tip}}</p>
+          <t-input v-model="bannerForm.image" placeholder="或直接粘贴图片地址" />
+        </t-form-item>
+        <t-form-item :label="lang.banner_url" name="url">
+          <t-input :placeholder="lang.input" v-model="bannerForm.url" />
+        </t-form-item>
+        <t-form-item :label="lang.banner_button_text" name="button_text">
+          <t-input :placeholder="lang.input" v-model="bannerForm.button_text" />
+        </t-form-item>
+        <t-form-item :label="lang.sort" name="sort">
+          <t-input-number v-model="bannerForm.sort" :min="0" />
+        </t-form-item>
+      </t-form>
+      <div class="com-f-btn" style="text-align: center; margin-top: 20px;">
+        <t-button theme="primary" @click="saveBanner" :loading="submitLoading">{{lang.save}}</t-button>
+        <t-button theme="default" @click="closeBannerDialog">{{lang.cancel}}</t-button>
+      </div>
+    </t-dialog>
+
+    <!-- 推荐产品编辑弹窗 -->
+    <t-dialog :header="recommendForm.id ? lang.edit_recommend : lang.add_recommend" placement="center" :visible.sync="recommendVisible" :on-close="closeRecommendDialog" width="720px" :footer="false">
+      <t-form label-align="right" :data="recommendForm" ref="recommendForm" :rules="recommendRules">
+        <t-form-item :label="lang.recommend_name" name="name">
+          <t-input :placeholder="lang.input" v-model="recommendForm.name" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_product_id" name="product_id">
+          <t-input-number v-model="recommendForm.product_id" :min="0" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_description" name="description">
+          <t-input :placeholder="lang.input" v-model="recommendForm.description" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_tag" name="tag">
+          <t-input :placeholder="lang.input" v-model="recommendForm.tag" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_price" name="price">
+          <t-input :placeholder="lang.input" v-model="recommendForm.price" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_unit" name="unit">
+          <t-input :placeholder="lang.input" v-model="recommendForm.unit" />
+        </t-form-item>
+        <t-form-item :label="lang.recommend_url" name="url">
+          <t-input :placeholder="lang.input" v-model="recommendForm.url" />
+        </t-form-item>
+        <t-form-item :label="lang.sort" name="sort">
+          <t-input-number v-model="recommendForm.sort" :min="0" />
+        </t-form-item>
+      </t-form>
+      <div class="com-f-btn" style="text-align: center; margin-top: 20px;">
+        <t-button theme="primary" @click="saveRecommend" :loading="submitLoading">{{lang.save}}</t-button>
+        <t-button theme="default" @click="closeRecommendDialog">{{lang.cancel}}</t-button>
+      </div>
+    </t-dialog>
+
+    <!-- 合作伙伴编辑弹窗 -->
+    <t-dialog :header="partnerForm.id ? lang.edit_partner : lang.add_partner" placement="center" :visible.sync="partnerVisible" :on-close="closePartnerDialog" width="720px" :footer="false">
+      <t-form label-align="right" :data="partnerForm" ref="partnerForm" :rules="partnerRules">
+        <t-form-item :label="lang.partner_name" name="name">
+          <t-input :placeholder="lang.input" v-model="partnerForm.name" />
+        </t-form-item>
+        <t-form-item :label="lang.partner_image" name="image">
+          <t-upload theme="custom" v-model="partnerImageFiles" :before-upload="beforeUpload" :action="uploadUrl"
+            :headers="uploadHeaders" :format-response="formatResponse" @success="onPartnerUploadSuccess" @fail="handleFail" @remove="onPartnerRemove" accept="image/*" :show-upload-progress="true" :drag="false">
+            <t-button theme="default" class="upload">
+              <t-icon name="cloud-upload" /> {{lang.upload_image}}
+            </t-button>
+          </t-upload>
+          <p class="upload-tip">{{lang.upload_tip}}</p>
+          <t-input v-model="partnerForm.image" placeholder="或直接粘贴图片地址" />
+        </t-form-item>
+        <t-form-item :label="lang.partner_url" name="url">
+          <t-input :placeholder="lang.input" v-model="partnerForm.url" />
+        </t-form-item>
+        <t-form-item :label="lang.partner_wall" name="wall">
+          <t-radio-group v-model="partnerForm.wall">
+            <t-radio-button :value="1">{{lang.wall_1}}</t-radio-button>
+            <t-radio-button :value="2">{{lang.wall_2}}</t-radio-button>
+          </t-radio-group>
+        </t-form-item>
+        <t-form-item :label="lang.sort" name="sort">
+          <t-input-number v-model="partnerForm.sort" :min="0" />
+        </t-form-item>
+      </t-form>
+      <div class="com-f-btn" style="text-align: center; margin-top: 20px;">
+        <t-button theme="primary" @click="savePartner" :loading="submitLoading">{{lang.save}}</t-button>
+        <t-button theme="default" @click="closePartnerDialog">{{lang.cancel}}</t-button>
+      </div>
+    </t-dialog>
+
+    <!-- 删除提示框 -->
+    <t-dialog theme="warning" :header="lang.sureDelete" :close-btn="false" :visible.sync="delVisible" class="delDialog">
+      <template slot="footer">
+        <t-button theme="primary" @click="sureDelete" :loading="submitLoading">{{lang.sure}}</t-button>
+        <t-button theme="default" @click="delVisible=false">{{lang.cancel}}</t-button>
+      </template>
+    </t-dialog>
+  </com-config>
+</div>
+
+<script src="/plugins/addon/furll_home/template/admin/lang/zh-cn.js"></script>
+<script src="/plugins/addon/furll_home/template/admin/api/new.js"></script>
+<script src="/plugins/addon/furll_home/template/admin/js/new.js?t=3"></script>

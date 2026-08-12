@@ -11,6 +11,12 @@ Route::group('console/v1',function (){
     Route::get('furll_home/home', "\\addon\\furll_home\\controller\\clientarea\\IndexController@home")
         ->append(['_plugin'=>'furll_home','_controller'=>'index','_action'=>'home']);
 
+    # 官方 default 模板内容壳（供 FurLLV10 iframe 使用，外层导航由 React 提供）
+    Route::get('furll_home/default-cart-goods', "\\addon\\furll_home\\controller\\clientarea\\IndexController@defaultCartGoods")
+        ->append(['_plugin'=>'furll_home','_controller'=>'index','_action'=>'default_cart_goods']);
+    Route::get('furll_home/default-product-detail', "\\addon\\furll_home\\controller\\clientarea\\IndexController@defaultProductDetail")
+        ->append(['_plugin'=>'furll_home','_controller'=>'index','_action'=>'default_product_detail']);
+
     # 账单月度统计（原 rtapi/bill_monthly.php 融合，需登录）
     Route::post('furll_home/bill_monthly', "\\addon\\furll_home\\controller\\clientarea\\IndexController@billMonthly")
         ->append(['_plugin'=>'furll_home','_controller'=>'index','_action'=>'bill_monthly']);

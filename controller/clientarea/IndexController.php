@@ -6,7 +6,9 @@ use addon\furll_home\model\FurllHomeBannerModel;
 use addon\furll_home\model\FurllHomeRecommendModel;
 use addon\furll_home\model\FurllHomePartnerModel;
 use addon\furll_home\model\FurllHomeConfigModel;
+use app\admin\model\PluginModel;
 use think\facade\Db;
+use think\facade\View;
 
 /**
  * @title FurLL 官网首页配置(前台)
@@ -15,6 +17,107 @@ use think\facade\Db;
  */
 class IndexController extends PluginBaseController
 {
+    /**
+     * 官方 default 模板内容区的隔离样式。
+     *
+     * iframe 保留官方页面与模块的真实 HTML/CSS/JS；仅隐藏已由 FurLLV10 提供的
+     * 顶栏和侧栏，避免双重导航。组件仍挂载，官方 goods.js/productdetail.js 的生命周期
+     * 与依赖保持不变。
+     */
+    private function defaultContentShellStyle(): string
+    {
+        return <<<'CSS'
+<style id="furll-default-content-shell">
+html, body { height: 100%; margin: 0; overflow: hidden; }
+.goods, .product_detail, .goods > .el-container, .product_detail > .el-container,
+.goods > .el-container > .el-container, .product_detail > .el-container > .el-container { height: 100%; }
+.goods > .el-container > .el-container > .el-main,
+.product_detail > .el-container > .el-container > .el-main { height: 100%; margin: 0; padding: 0; border-radius: 0; }
+/* Vue 挂载后 aside-menu/top-menu 分别替换为 .el-aside 与 .el-header。 */
+.goods > .el-container > .el-aside,
+.product_detail > .el-container > .el-aside,
+.goods > .el-container > .el-container > div:first-child,
+.product_detail > .el-container > .el-container > div:first-child { display: none !important; }
+.goods > .el-container > .el-container,
+.product_detail > .el-container > .el-container { margin-left: 0 !important; width: 100% !important; }
+.goods .config-box, .product_detail .config-box { height: 100%; }
+.goods .content, .product_detail .content { min-height: 100%; }
+.goods .buy, .goods .add-cart, .goods .cart, .goods .buy-btn, .goods .f-btn,
+.goods .f-order .right { display: none !important; }
+</style>
+CSS;
+    }
+
+    /**
+     * @title 官方默认商品配置内容
+     * @desc 返回官方 pc/default goods.php 的实际渲染结果，移除重复导航供 FurLLV10 iframe 嵌入
+     * @url /console/v1/furll_home/default-cart-goods
+     * @method GET
+     */
+    public function defaultCartGoods()
+    {
+        return $this->renderDefaultContent('goods', true);
+    }
+
+    /**
+     * @title 官方默认产品详情内容
+     * @desc 返回官方 pc/default productdetail.php 的实际渲染结果，移除重复导航供 FurLLV10 iframe 嵌入
+     * @url /console/v1/furll_home/default-product-detail
+     * @method GET
+     */
+    public function defaultProductDetail()
+    {
+        return $this->renderDefaultContent('productdetail', false);
+    }
+
+    /** 渲染官方 pc/default 的完整模板，再隐藏与 React 外壳重复的导航。 */
+    private function renderDefaultContent(string $page, bool $isCart)
+    {
+        $defaultTheme = 'pc/default';
+        $data = [
+            'title'                  => '',
+            'template_catalog'       => 'clientarea',
+            'themes'                 => $defaultTheme,
+            'public_themes'          => $defaultTheme,
+            'clientarea_theme_color' => 'default',
+            'system_version'         => configuration('system_version'),
+        ];
+
+        $PluginModel = new PluginModel();
+        $addons = $PluginModel->plugins('addon');
+        $data['addons'] = $addons['list'];
+        $data = assign_clientarea_lang_config($data);
+
+        $headerPath = IDCSMART_ROOT . 'public/clientarea/template/' . $defaultTheme . '/header.php';
+        $footerPath = IDCSMART_ROOT . 'public/clientarea/template/' . $defaultTheme . '/footer.php';
+        $header = View::fetch($headerPath, $data);
+        $footer = View::fetch($footerPath, $data);
+
+        if ($isCart) {
+            $cartTheme = 'pc/default';
+            $pageData = [
+                'title'                 => '',
+                'template_catalog_cart' => 'cart',
+                'themes'                => $defaultTheme,
+                'themes_cart'           => $cartTheme,
+            ];
+            View::config([
+                'view_path' => '../public/cart/template/' . $cartTheme . '/',
+            ]);
+        } else {
+            $pageData = $data;
+            View::config([
+                'view_path' => '../public/clientarea/template/' . $defaultTheme . '/',
+            ]);
+        }
+
+        $content = $header . View::fetch('/' . $page, $pageData) . $footer;
+        return response(str_replace('</head>', $this->defaultContentShellStyle() . '</head>', $content), 200, [
+            'Content-Type'  => 'text/html; charset=utf-8',
+            'Cache-Control' => 'no-store',
+        ]);
+    }
+
     /**
      * @title 官网首页配置
      * @desc 返回 FurLLV10 官网首页渲染所需的轮播图、推荐产品、合作伙伴 Logo 配置

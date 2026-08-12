@@ -2,7 +2,7 @@
 
 > **AI 辅助声明**：本插件部分代码由 AI 辅助生成 / AI 自动补全（含代码、接口文档与后台页面）。已在人工审阅与测试后发布，但请在使用前自行评估与验证。
 
-为 **FurLLV10**（魔方业务系统 V10）官网首页提供内容配置的魔方 addon 插件：轮播图、推荐产品、合作伙伴 Logo，无需改前端代码即可后台维护官网首屏。同时融合了会员中心首页所需的**账单月度统计**与**已安装扩展列表**两个接口（原独立 `rtapi/` 接口已并入本插件）。
+为 **FurLLV10**（魔方业务系统 V10）官网首页提供内容配置的魔方 addon 插件：轮播图、推荐产品、合作伙伴 Logo，无需改前端代码即可后台维护官网首屏。同时融合了会员中心首页所需的**账单月度统计**与**已安装扩展列表**两个接口（原独立 `rtapi/` 接口已并入本插件），并提供**官方 `pc/default` 模板内容渲染**接口，供 FurLLV10 未适配页面的 iframe 嵌入使用。
 
 > 配套模板仓库：FurLLORG/furllv10-template（React 单应用官网 + 会员中心模板）。前端 `useFurllHome()` 调用本插件 `/console/v1/furll_home/home`，配置为空时自动回退内置静态数据。
 
@@ -13,6 +13,9 @@
 - **合作伙伴 Logo**：名称 / Logo / 跳转链接，按滚动行（`wall` 1/2）分两行展示，无数量限制。
 - **账单月度统计**：最近 12 个月已支付 / 未支付订单金额按月汇总。
 - **已安装扩展列表**：当前系统已启用的 addon 插件清单。
+- **官方 default 内容渲染**：`default-cart-goods` / `default-product-detail` 返回官方 `pc/default`
+  模板（goods.php / productdetail.php）的真实渲染结果，注入隔离样式隐藏重复导航，供 FurLLV10
+  未适配页面的 iframe 嵌入。**FurLLV10 未适配的产品选配 / 管理页面依赖此接口，插件必须安装。**
 
 ## 环境要求
 
@@ -48,7 +51,7 @@ furll_home/
 ├── config/config.php           # 文件上传目录配置
 ├── controller/
 │   ├── AdminIndexController.php    # 后台配置管理
-│   └── clientarea/IndexController.php  # 前台 home / bill_monthly / addons
+│   └── clientarea/IndexController.php  # 前台 home / default_cart_goods / default_product_detail / bill_monthly / addons
 ├── lang/                       # zh-cn / zh-hk / en-us 语言包
 ├── model/                      # Banner / Recommend / Partner / Config 模型
 ├── validate/                   # 参数校验
@@ -71,6 +74,8 @@ furll_home/
 | 方法 | 路径 | 认证 | 说明 |
 |------|------|------|------|
 | GET | `/console/v1/furll_home/home` | 无需 | 轮播图 + 推荐开关/产品 + 合作伙伴 |
+| GET | `/console/v1/furll_home/default-cart-goods` | 无需 | 官方 `pc/default` 商品配置页内容（goods.php），供 iframe 嵌入 |
+| GET | `/console/v1/furll_home/default-product-detail` | 无需 | 官方 `pc/default` 产品详情/管理页内容（productdetail.php），供 iframe 嵌入 |
 | POST | `/console/v1/furll_home/bill_monthly` | 需登录 | 最近 12 个月账单金额统计 |
 | GET | `/console/v1/furll_home/addons` | 无需 | 已启用插件列表 |
 

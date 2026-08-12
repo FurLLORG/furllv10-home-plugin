@@ -1,13 +1,13 @@
 # FurLL 官网首页配置插件 - API 文档
 
-插件：`FurllHome` v1.0.0
-说明：为 FurLLV10 官网首页提供轮播图、推荐产品、合作伙伴 Logo 的配置，并内置账单月度统计与已安装扩展列表接口（原 `rtapi/` 独立接口已融合进本插件）。
+插件：`FurllHome` v1.1.0
+说明：为 FurLLV10 官网首页提供轮播图、推荐产品、合作伙伴 Logo 的配置，内置账单月度统计与已安装扩展列表接口（原 `rtapi/` 独立接口已融合进本插件），并提供官方 `pc/default` 模板内容渲染接口供 FurLLV10 未适配页面的 iframe 嵌入。
 
 ## 通用约定
 
 - 数据表前缀：`idcsmart_`（框架自动拼接，以下 URL 不含前缀）
 - 认证：
-  - 前台 `/console/v1/**`：`Authorization: Bearer <JWT>`。`home`、`addons` 接口无需登录；`bill_monthly` 需登录（未登录返回 `{"status":401}`）。
+  - 前台 `/console/v1/**`：`Authorization: Bearer <JWT>`。`home`、`default-cart-goods`、`default-product-detail`、`addons` 接口无需登录；`bill_monthly` 需登录（未登录返回 `{"status":401}`）。
   - 后台 `/admin/v1/**`：`Authorization: Bearer <JWT>`（后台 token，`localStorage.backJwt`），并校验后台权限。
 - `hidden` 字段语义：`0` = 显示，`1` = 隐藏（所有资源一致）。
 - 返回统一结构：`{"status":200,"msg":"请求成功","data":{...}}`；错误时 `status` 为 `400/401/404` 等，`msg` 为中文提示。
@@ -169,6 +169,34 @@ GET /console/v1/furll_home/addons
 
 字段说明：
 - `addons[]`：`id` 插件 ID、`name` 插件英文名（唯一标识）、`title` 显示名称、`url` 跳转地址。
+
+---
+
+### 1.4 官方 default 模板内容渲染
+
+- URL：`GET /console/v1/furll_home/default-cart-goods`、`GET /console/v1/furll_home/default-product-detail`
+- 认证：无需登录
+- 说明：返回官方 `pc/default` 模板的真实渲染结果，供 FurLLV10 未适配页面的 iframe 嵌入。
+  - `default-cart-goods` 渲染 `cart/template/pc/default/goods.php`（商品选配页）
+  - `default-product-detail` 渲染 `clientarea/template/pc/default/productdetail.php`（产品详情/管理页）
+  - 均注入 `<style id="furll-default-content-shell">` 隐藏官方顶栏/侧栏，避免双重导航；
+    模块脚本、CSS、语言包来自官方 default 模板，与后台配置完全一致。
+- **FurLLV10 未适配的产品选配 / 管理页面依赖本接口，插件必须安装；未安装时返回 404。**
+
+请求示例：
+
+```
+GET /console/v1/furll_home/default-cart-goods?id=456&change=true&name=我的云主机
+GET /console/v1/furll_home/default-product-detail?id=789
+```
+
+参数说明：
+- `id`（必填）：`default-cart-goods` 为商品 ID（`productId`）；`default-product-detail` 为主机 ID（`hostId`）。
+- `change`（可选，仅商品页）：是否编辑模式（官方 goods.htm?change=true）。
+- `name`（可选，仅商品页）：商品名称（编辑模式显示用）。
+
+响应：`Content-Type: text/html; charset=utf-8`，`Cache-Control: no-store`，`200` 返回完整 HTML
+（含官方 `pc/default` 的 header/footer 壳与对应模块 Vue 脚本）；参数缺失返回 `400`。
 
 ---
 

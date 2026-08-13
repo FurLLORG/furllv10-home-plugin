@@ -112,6 +112,19 @@ CSS;
         }
 
         $content = $header . View::fetch('/' . $page, $pageData) . $footer;
+
+        // 游客态剥离顶栏/侧栏组件：其 created() 钩子会请求需登录接口 /index，
+        // 返回 401 后官方 utils/request.js 会把 iframe 重定向到登录页（iframe 地址
+        // default-cart-goods 不在其 noNeedJwtUrlArr 免登录白名单内），导致配置区嵌入登录页。
+        // 剥离后 Vue 不再挂载这两个组件，也不会触发需登录请求，游客可正常浏览配置表单。
+        if (empty(get_client_id())) {
+            $content = preg_replace(
+                '#<(/)?(?:aside-menu|top-menu)(?:\s[^>]*)?>#i',
+                '',
+                $content
+            );
+        }
+
         return response(str_replace('</head>', $this->defaultContentShellStyle() . '</head>', $content), 200, [
             'Content-Type'  => 'text/html; charset=utf-8',
             'Cache-Control' => 'no-store',

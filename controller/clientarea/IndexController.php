@@ -97,6 +97,7 @@ CSS;
             $cartTheme = 'pc/default';
             $pageData = [
                 'title'                 => '',
+                'template_catalog'      => 'clientarea',
                 'template_catalog_cart' => 'cart',
                 'themes'                => $defaultTheme,
                 'themes_cart'           => $cartTheme,
